@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 struct staticContentServerStruct {
 	char *rootDir;
+	char *indexFileName;
 };
 
-staticContentServer_t *createStaticContentServer(const char *staticContentRootDir) {
+staticContentServer_t *createStaticContentServer(const char *staticContentRootDir, const char *indexFileName) {
 	if (!staticContentRootDir) {
 		return NULL;
 	}
@@ -17,13 +19,28 @@ staticContentServer_t *createStaticContentServer(const char *staticContentRootDi
 		return NULL;
 	}
 
-	out->rootDir = malloc(strlen(staticContentRootDir) * sizeof(char));
+	out->rootDir = malloc((strlen(staticContentRootDir) + 1) * sizeof(char));
 	if (!out->rootDir) {
 		free(out);
 		return NULL;
 	}
 
+	out->indexFileName = malloc((strlen(indexFileName) + 2) * sizeof(char));
+	if (!out->indexFileName) {
+		free(out->rootDir);
+		free(out);
+		return NULL;
+	}
+
 	strncpy(out->rootDir, staticContentRootDir, strlen(staticContentRootDir));
+	
+	out->indexFileName[0] = "/";
+	strcat(out->indexFileName, indexFileName);
+
+	// Ensure that there is no slash at the end of the rootDir
+	while (out->rootDir[strlen(out->rootDir) - 1] == '/') {
+		out->rootDir[strlen(out->rootDir) - 1] = '\0';
+	}
 
 	return out;
 }
@@ -58,7 +75,13 @@ httpResponse_t *serveStaticContent(staticContentServer_t *scs, const char *stati
 	}
 
 	strcpy(filepath, scs->rootDir);
-	strcat(filepath, staticContentUri);
+
+	// Handle special case for index
+	if (!strncmp(staticContentUri, "/", 1)) {
+		strcat(filepath, scs->indexFileName);
+	} else {
+		strcat(filepath, staticContentUri);
+	}
 	
 	httpResponse_t *out = generateStaticHttpResponse(filepath);
 	free(filepath);

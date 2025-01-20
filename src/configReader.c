@@ -51,6 +51,7 @@ ssize_t THREADPOOL_SIZE_HASH;
 ssize_t THREADPOOL_BUSY_WAIT_TIMER_HASH;
 ssize_t REQUEST_MAPPING_DOMAIN_HASH;
 ssize_t WEBSERVER_ROOT_DIR_HASH;
+ssize_t WEBSERVER_INDEX_HASH;
 
 int readLine(config_t *conf, FILE *fp) {
 	// Grab a buffer to read configuration lines into
@@ -91,6 +92,8 @@ int readLine(config_t *conf, FILE *fp) {
 		conf->requestMappingDomainSize = atoi(value);	
 	} else if (hash == WEBSERVER_ROOT_DIR_HASH) {
 		strncpy(conf->webserverRootDir, value, MAX_WEBSERVER_ROOT_DIR_PATH_LEN);
+	} else if (hash == WEBSERVER_INDEX_HASH) {
+		strncpy(conf->webserverIndexFileName, value, MAX_WEBSERVER_INDEX_FILE_NAME_LEN);
 	} else {
 		printf("Unknown configuration property: '%s'\n", property);
 		return INVALID_PROPERTY;
@@ -122,6 +125,7 @@ void precomputeHashes() {
 	hashValues[5] = THREADPOOL_BUSY_WAIT_TIMER_HASH = hashProperty("threadpool-busy-wait-timer");
 	hashValues[6] = REQUEST_MAPPING_DOMAIN_HASH = hashProperty("request-mapping-domain");
 	hashValues[7] = WEBSERVER_ROOT_DIR_HASH = hashProperty("webserver-root-dir");
+	hashValues[8] = WEBSERVER_INDEX_HASH = hashProperty("webserver-index");
 }
 
 bool verifyHashIntegrity() {

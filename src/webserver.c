@@ -21,6 +21,7 @@ struct webserverStruct {
 	requestHandler_t *reqHandler;
 	size_t requestMappingDomainSize;
 	char *staticContentRootDir;
+	char *staticContentIndexFileName;
 };
 
 webserver_t *registerWebserver(config_t *conf) {
@@ -115,7 +116,7 @@ int startWebserver(webserver_t *ws) {
 	}
 
 	// Create a request handler to map requests
-	ws->reqHandler = createRequestHandler(ws->requestMappingDomainSize, ws->staticContentRootDir);
+	ws->reqHandler = createRequestHandler(ws->requestMappingDomainSize, ws->staticContentRootDir, ws->staticContentIndexFileName);
 	if (!ws->reqHandler) {
 		free(ws->connectionQueue);
 		deleteSocket(ws->socket);

@@ -24,3 +24,6 @@ The size of potential mapping locations for bindings, larger values may increase
 
 ## webserver-root-dir
 The root directory of static content that the webserver serves
+
+## webserver-index
+The static index file path relative to webserver-root-dir

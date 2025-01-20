@@ -13,8 +13,9 @@ typedef httpResponse_t *(*handlerFunction)(void *);
 /// @brief Create a new request handler object
 /// @param uriMappingDomainSize The size of the URI Mapping Domain
 /// @param staticContentRootDir The root directory for static content served by the server
+/// @param staticContentIndexFileName The name of the index file for static content relative to the static content root directory
 /// @return A new request handler object, or NULL on error
-requestHandler_t *createRequestHandler(size_t uriMappingDomainSize, const char *staticContentRootDir);
+requestHandler_t *createRequestHandler(size_t uriMappingDomainSize, const char *staticContentRootDir, const char *staticContentIndexFileName);
 
 /// @brief Register a new API endpoint on the server
 /// @param reqHandler The request handler object

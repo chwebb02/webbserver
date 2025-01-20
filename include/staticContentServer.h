@@ -8,8 +8,9 @@ typedef struct staticContentServerStruct staticContentServer_t;
 
 /// @brief Create a new static content server
 /// @param staticContentRootDir The root directory for finding static content
+/// @param indexFileName The name of the index file relative to the static content root directory
 /// @return The static content server object, or NULL on error
-staticContentServer_t *createStaticContentServer(const char *staticContentRootDir);
+staticContentServer_t *createStaticContentServer(const char *staticContentRootDir, const char *indexFileName);
 
 /// @brief Respond to an HTTP request for static content
 /// @param scs The static content server object
