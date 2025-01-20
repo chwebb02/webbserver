@@ -29,6 +29,11 @@ int startWebserver(webserver_t *ws);
 /// @return 0 on success, or an error code on failure
 int webserverSendCommand(webserver_t *ws, webserverManagementCommand_t command);
 
+/// @brief Get the port that a webserver is bound to
+/// @param ws The webserver object
+/// @return The port number on success, or 0 on failure
+unsigned short getWebserverPort(webserver_t *ws);
+
 /// @brief Release all memory associated with the webserver
 /// @param ws The webserver object
 void deleteWebserver(webserver_t *ws);

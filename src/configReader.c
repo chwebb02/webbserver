@@ -111,7 +111,8 @@ void setDefaults(config_t *conf) {
 	conf->threadpoolBusyWaitTimer = CONFIG_DEFAULT_THREADPOOL_BUSY_WAIT_TIMER;
 	conf->requestMappingDomainSize = CONFIG_DEFAULT_REQUEST_MAPPING_DOMAIN_SIZE;
 
-	strncpy(conf->webserverRootDir, ".", 1 * sizeof(char));
+	strncpy(conf->webserverRootDir, CONFIG_DEFAULT_WEBSERVER_ROOT_DIR, (strlen(CONFIG_DEFAULT_WEBSERVER_ROOT_DIR) + 1) * sizeof(char));
+	strncpy(conf->webserverIndexFileName, CONFIG_DEFAULT_WEBSERVER_INDEX, (strlen(CONFIG_DEFAULT_WEBSERVER_INDEX) + 1) * sizeof(char));
 }
 
 // Precompute hashes for optimization

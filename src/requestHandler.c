@@ -9,8 +9,10 @@ struct requestHandlerStruct {
 	staticContentServer_t *staticServer;
 };
 
-requestHandler_t *createRequestHandler(size_t uriMappingDomainSize, const char *staticContentRootDir, const char *staticContentIndexFileName) {
-	if (uriMappingDomainSize < 1 || !staticContentRootDir) {
+#include <stdio.h>
+
+requestHandler_t *createRequestHandler(config_t *conf) {
+	if (conf->requestMappingDomainSize < 1 || !conf->webserverRootDir) {
 		return NULL;
 	}
 
@@ -19,13 +21,13 @@ requestHandler_t *createRequestHandler(size_t uriMappingDomainSize, const char *
 		return NULL;
 	}
 
-	out->uriMappings = createHashmap(uriMappingDomainSize, NULL);
+	out->uriMappings = createHashmap(conf->requestMappingDomainSize, NULL);
 	if (!out->uriMappings) {
 		free(out);
 		return NULL;
 	}
 
-	out->staticServer = createStaticContentServer(staticContentRootDir, staticContentIndexFileName);
+	out->staticServer = createStaticContentServer(conf);
 	if (!out->staticServer) {
 		deleteHashmap(out->uriMappings);
 		free(out);

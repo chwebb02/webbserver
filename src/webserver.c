@@ -17,11 +17,7 @@ struct webserverStruct {
 	threadpool_t *threadpool;
 	unsigned short busyWaitTimer;
 	unsigned short threadCount;
-	bool stopConnectionListener;
 	requestHandler_t *reqHandler;
-	size_t requestMappingDomainSize;
-	char *staticContentRootDir;
-	char *staticContentIndexFileName;
 };
 
 webserver_t *registerWebserver(config_t *conf) {
@@ -40,18 +36,24 @@ webserver_t *registerWebserver(config_t *conf) {
 		return NULL;
 	}
 
-	out->threadCount = conf->threadpoolSize;
-	out->busyWaitTimer = conf->threadpoolBusyWaitTimer;
-	out->stopConnectionListener = false;
-	out->requestMappingDomainSize = conf->requestMappingDomainSize;
-
-	out->staticContentRootDir = malloc(strlen(conf->webserverRootDir) * sizeof(char));
-	if (!out->staticContentRootDir) {
+	out->reqHandler = createRequestHandler(conf);
+	if (!out->reqHandler) {
 		deleteSocket(out->socket);
 		free(out);
 		return NULL;
 	}
-	strncpy(out->staticContentRootDir, conf->webserverRootDir, strlen(conf->webserverRootDir));
+
+	// Create the queue for incoming connections
+	out->connectionQueue = createQueue((void (*)(void *)) deleteClientConnection);
+	if (!out->connectionQueue) {
+		deleteRequestHandler(out->reqHandler);
+		deleteSocket(out->socket);
+		free(out);
+		return NULL;
+	}
+
+	out->threadCount = conf->threadpoolSize;
+	out->busyWaitTimer = conf->threadpoolBusyWaitTimer;
 
 	return out;
 }
@@ -90,14 +92,14 @@ void connectionListenerFunction(webserver_t *ws) {
 		// Accept connection
 		clientConnection_t *connection = socketAcceptConnection(ws->socket);
 		if (!connection) {
-			perror("Failed to accept connection");
+			// printf("Failed to accept connection");
 			continue;
 		}
-
-		queueAdd(ws->connectionQueue, connection);
 		
-		if (ws->stopConnectionListener) {
-			break;
+		if (queueAdd(ws->connectionQueue, connection)) {
+			// printf("Failed to add connection to queue.\n");
+			deleteClientConnection(connection);
+			continue;
 		}
 	}
 }
@@ -105,23 +107,6 @@ void connectionListenerFunction(webserver_t *ws) {
 int startWebserver(webserver_t *ws) {
 	if (!ws) {
 		return 4;
-	}
-
-	// Create the queue for incoming connections
-	ws->connectionQueue = createQueue((void (*)(void *)) deleteClientConnection);
-	if (!ws->connectionQueue) {
-		deleteSocket(ws->socket);
-		free(ws);
-		return 1;
-	}
-
-	// Create a request handler to map requests
-	ws->reqHandler = createRequestHandler(ws->requestMappingDomainSize, ws->staticContentRootDir, ws->staticContentIndexFileName);
-	if (!ws->reqHandler) {
-		free(ws->connectionQueue);
-		deleteSocket(ws->socket);
-		free(ws);
-		return 2;
 	}
 
 	// Create a threadpool that processes transactions as connections are added to the queue
@@ -137,7 +122,15 @@ int startWebserver(webserver_t *ws) {
 	// Create a connection listener thread to add incoming connections to the queue
 	pthread_create(&ws->connectionListener, NULL, (void *(*)(void *)) connectionListenerFunction, ws);
 
-	printf("Started webserver on port %d.\n", socketGetBoundPort(ws->socket));
+	return 0;
+}
+
+unsigned short getWebserverPort(webserver_t *ws) {
+	if (!ws) {
+		return 0;
+	}
+
+	return socketGetBoundPort(ws->socket);
 }
 
 int webserverSendCommand(webserver_t *ws, webserverManagementCommand_t command) {

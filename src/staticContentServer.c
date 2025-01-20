@@ -9,8 +9,8 @@ struct staticContentServerStruct {
 	char *indexFileName;
 };
 
-staticContentServer_t *createStaticContentServer(const char *staticContentRootDir, const char *indexFileName) {
-	if (!staticContentRootDir) {
+staticContentServer_t *createStaticContentServer(config_t *conf) {
+	if (!conf->webserverRootDir) {
 		return NULL;
 	}
 
@@ -19,23 +19,23 @@ staticContentServer_t *createStaticContentServer(const char *staticContentRootDi
 		return NULL;
 	}
 
-	out->rootDir = malloc((strlen(staticContentRootDir) + 1) * sizeof(char));
+	out->rootDir = malloc((strlen(conf->webserverRootDir) + 1) * sizeof(char));
 	if (!out->rootDir) {
 		free(out);
 		return NULL;
 	}
 
-	out->indexFileName = malloc((strlen(indexFileName) + 2) * sizeof(char));
+	out->indexFileName = malloc((strlen(conf->webserverIndexFileName) + 2) * sizeof(char));
 	if (!out->indexFileName) {
 		free(out->rootDir);
 		free(out);
 		return NULL;
 	}
 
-	strncpy(out->rootDir, staticContentRootDir, strlen(staticContentRootDir));
+	strncpy(out->rootDir, conf->webserverRootDir, strlen(conf->webserverRootDir));
 	
-	out->indexFileName[0] = "/";
-	strcat(out->indexFileName, indexFileName);
+	out->indexFileName[0] = '/';
+	strcat(out->indexFileName, conf->webserverIndexFileName);
 
 	// Ensure that there is no slash at the end of the rootDir
 	while (out->rootDir[strlen(out->rootDir) - 1] == '/') {

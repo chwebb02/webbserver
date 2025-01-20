@@ -3,6 +3,7 @@
 
 #include "http.h"
 #include <sys/types.h>
+#include "config.h"
 
 /// @brief A structure for managing request handling on the server
 typedef struct requestHandlerStruct requestHandler_t;
@@ -15,7 +16,7 @@ typedef httpResponse_t *(*handlerFunction)(void *);
 /// @param staticContentRootDir The root directory for static content served by the server
 /// @param staticContentIndexFileName The name of the index file for static content relative to the static content root directory
 /// @return A new request handler object, or NULL on error
-requestHandler_t *createRequestHandler(size_t uriMappingDomainSize, const char *staticContentRootDir, const char *staticContentIndexFileName);
+requestHandler_t *createRequestHandler(config_t *conf);
 
 /// @brief Register a new API endpoint on the server
 /// @param reqHandler The request handler object

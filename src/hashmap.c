@@ -139,7 +139,7 @@ size_t defaultHashFunction(hashmap_t *map, const char *input) {
 }
 
 hashmap_t *createHashmap(size_t domainSize, hashFunction_t hashFunc) {
-	if (domainSize < 1 || !hashFunc) {
+	if (domainSize < 1) {
 		return NULL;
 	}
 

@@ -39,8 +39,6 @@ httpRequest_t *awaitClientRequest(clientConnection_t *cc) {
 	char buffer[BUFSIZ];
 	recv(cc->fd, buffer, BUFSIZ * sizeof(char), 0);
 
-	printf("\nRECEIVED REQUEST:\n%s", buffer);
-
 	return deserializeHttpRequest(buffer);
 }
 

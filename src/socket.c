@@ -71,7 +71,6 @@ socket_t *createSocket(config_t *conf) {
 		}
 	}
 	out->boundPort = port;
-	printf("Starting server on port %d...\n", port);
 
 	if (-1 == listen(out->fd, conf->connectionQueueMaxSize)) {
 		perror("Could not begin listening for connections");
@@ -96,17 +95,13 @@ clientConnection_t *socketAcceptConnection(socket_t *sock) {
 		return NULL;
 	}
 
-	printf("Awaiting connection...\n");
 	struct sockaddr_in addr;
 
 	socklen_t addrLen;
 	int fd = accept(sock->fd, (struct sockaddr *) &addr, &addrLen);
 	if (fd < 0) {
-		perror("Failed to accept connection.");
 		return NULL;
 	}
-
-	printf("Connection received.\n");
 
 	return createClientConnection(fd, addr, addrLen);
 }
