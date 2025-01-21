@@ -20,6 +20,7 @@ struct hashmapStruct {
 	hashmapList_t **array;			// Array of hashmapLists
 	size_t arrayLength;
 	hashFunction_t func;
+	void (*freeItemFunc)(void *);
 };
 
 hashmapList_t *createHashmapList() {
@@ -35,7 +36,7 @@ hashmapList_t *createHashmapList() {
 	return out;
 }
 
-node_t *createNode(void *item, const char *unhashedKey) {
+node_t *createHashmapNode(void *item, const char *unhashedKey) {
 	node_t *out = malloc(sizeof(node_t));
 	if (!out) {
 		return NULL;
@@ -58,7 +59,7 @@ int hashmapListInsert(hashmapList_t *list, void *item, const char *unhashedKey) 
 		return 2;
 	}
 
-	node_t *insertion = createNode(item, unhashedKey);
+	node_t *insertion = createHashmapNode(item, unhashedKey);
 	if (!insertion) {
 		return 1;
 	}
@@ -93,7 +94,7 @@ void *hashmapListSearch(hashmapList_t *list, const char *key) {
 	return NULL;
 }
 
-void deleteHashmapList(hashmapList_t *hml) {
+void deleteHashmapList(hashmapList_t *hml, void (*freeItemFunc)(void *)) {
 	if (!hml) {
 		return;
 	}
@@ -102,6 +103,10 @@ void deleteHashmapList(hashmapList_t *hml) {
 	node_t *next;
 	for (size_t i = 0; i < hml->length; i++) {
 		next = current->next;
+
+		if (freeItemFunc) {
+			freeItemFunc(current->item);
+		}
 
 		free(current->unhashedKey);
 		free(current);
@@ -140,7 +145,7 @@ size_t defaultHashFunction(hashmap_t *map, const char *input) {
 	return out;
 }
 
-hashmap_t *createHashmap(size_t domainSize, hashFunction_t hashFunc) {
+hashmap_t *createHashmap(size_t domainSize, hashFunction_t hashFunc, void (*freeItemFunc)(void *)) {
 	if (domainSize < 1) {
 		return NULL;
 	}
@@ -150,7 +155,9 @@ hashmap_t *createHashmap(size_t domainSize, hashFunction_t hashFunc) {
 		return NULL;
 	}
 
-	if (!out->func) {
+	out->freeItemFunc = freeItemFunc;
+
+	if (!hashFunc) {
 		out->func = defaultHashFunction;
 	} else {
 		out->func = hashFunc;
@@ -166,7 +173,7 @@ hashmap_t *createHashmap(size_t domainSize, hashFunction_t hashFunc) {
 		out->array[out->arrayLength] = createHashmapList();
 		if (!out->array[out->arrayLength]) {
 			for (out->arrayLength -= 1; out->arrayLength >= 0; out->arrayLength--) {
-				deleteHashmapList(out->array[out->arrayLength]);
+				deleteHashmapList(out->array[out->arrayLength], freeItemFunc);
 				return NULL;
 			}
 		}
@@ -194,8 +201,9 @@ void deleteHashmap(hashmap_t *map) {
 	}
 
 	for (size_t i = 0; i < map->arrayLength; i++) {
-		deleteHashmapList(map->array[i]);
+		deleteHashmapList(map->array[i], map->freeItemFunc);
 	}
 
+	free(map->array);
 	free(map);
 }

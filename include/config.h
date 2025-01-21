@@ -6,6 +6,7 @@
 
 #define MAX_WEBSERVER_ROOT_DIR_PATH_LEN 512
 #define MAX_WEBSERVER_INDEX_FILE_NAME_LEN 64
+#define MAX_CONFIG_SEARCH_DEPTH 5
 
 typedef struct _configInternalStruct _configInternal_t;
 

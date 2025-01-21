@@ -21,7 +21,7 @@ requestHandler_t *createRequestHandler(config_t *conf) {
 		return NULL;
 	}
 
-	out->uriMappings = createHashmap(conf->requestMappingDomainSize, NULL);
+	out->uriMappings = createHashmap(conf->requestMappingDomainSize, NULL, NULL);
 	if (!out->uriMappings) {
 		free(out);
 		return NULL;

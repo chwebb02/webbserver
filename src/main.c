@@ -11,10 +11,26 @@ void usage(const char *execName) {
 }
 
 int main(int argc, char **argv) {
-	if (argc < 2) {
+	char *configFile = NULL;
+	if (argc > 1 && !strncmp(argv[1], "-h", 2)) {
 		usage(argv[0]);
 		exit(1);
 	}
+
+	printf("\nSearching for config file...\n");
+	if (argc > 1) {
+		printf("Config file supplied via command line.\n");
+		configFile = argv[1];
+	} else {
+		printf("No config file specified, searching...\n");
+		configFile = findConfigFile();
+		if (configFile == NULL) {
+			printf("Could not automatically locate a config file, please provide one.\n");
+			usage(argv[0]);
+			exit(1);
+		}
+	}
+	printf("Found config file at %s.\n", configFile);
 
 	// Set terminal to non-blocking
 	// prevents one thread from blocking input from other threads
@@ -22,7 +38,7 @@ int main(int argc, char **argv) {
 
 	// Begin configuration step
 	printf("\nReading configuration...\n");
-	config_t *conf = readConfigurationFile(argv[1]);
+	config_t *conf = readConfigurationFile(configFile);
 	if (!conf) {
 		perror("Could not read configuration file");
 		exit(1);
@@ -34,8 +50,16 @@ int main(int argc, char **argv) {
 	webserver_t *webserver = registerWebserver(conf);
 	if (!webserver) {
 		perror("Could not register the webserver");
+		
+		if (argc < 2) {
+			free(configFile);
+		}	
+		
 		deleteConfig(conf);
 		exit(1);
+	}
+	if (argc < 2) {
+		free(configFile);
 	}
 	printf("Webserver registered.\n");
 
@@ -62,7 +86,7 @@ int main(int argc, char **argv) {
 	unsigned short boundPort = getWebserverPort(webserver);
 	printf("Webserver started on port %d.\n", boundPort);
 
-	terminalSendMessage("Webserver time!");
+	terminalSendMessage("SERVER CONSOLE:");
 	char buffer[BUFSIZ];
 	while (1) {
 		fgets(buffer, BUFSIZ * sizeof(char), stdin);
@@ -75,7 +99,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	printf("Shutting down webserver on port %d...\n", boundPort);
+	printf("\nShutting down webserver on port %d...\n", boundPort);
 	deleteTerminal();
 	deleteWebserver(webserver);
 	printf("Shut down webserver on port %d.\n", boundPort);

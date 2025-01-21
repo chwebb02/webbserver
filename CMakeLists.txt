@@ -23,7 +23,7 @@ add_library(terminal SHARED src/terminal.c)
 target_link_libraries(clientConnection http)
 target_link_libraries(requestHandler hashmap staticContentServer)
 target_link_libraries(socket clientConnection)
-target_link_libraries(webserver socket threadpool clientConnection queue pthread requestHandler)
+target_link_libraries(webserver socket threadpool clientConnection queue pthread requestHandler terminal)
 target_link_libraries(server configReader webserver terminal)
 
 add_subdirectory(test/)

@@ -79,12 +79,12 @@ actionReturn_t setRequestMappingDomain(config_t *conf, const char *value) {
 }
 
 actionReturn_t setWebserverRootDir(config_t *conf, const char *value) {
-	strncpy(conf->webserverRootDir, value, MAX_WEBSERVER_ROOT_DIR_PATH_LEN);
+	strncpy(conf->webserverRootDir, value, MAX_WEBSERVER_ROOT_DIR_PATH_LEN - 1);
 	return SUCCESS;
 }
 
 actionReturn_t setWebserverIndex(config_t *conf, const char *value) {
-	strncpy(conf->webserverIndexFileName, value, MAX_WEBSERVER_INDEX_FILE_NAME_LEN);
+	strncpy(conf->webserverIndexFileName, value, MAX_WEBSERVER_INDEX_FILE_NAME_LEN - 1);
 	return SUCCESS;
 }
 
@@ -128,15 +128,15 @@ void setDefaults(config_t *conf) {
 
 int populatePropertyMap(config_t *conf) {
 	int status = 0;
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_PORT_STRING, (actionFunc_t) setWebserverPort);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_FIND_NEXT_AVAILABLE_PORT_STRING, (actionFunc_t) setFindNextAvailablePort);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_CONNECTION_QUEUE_SIZE_STRING, (actionFunc_t) setWebserverConnectionQueueSize);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_USE_IPV6_STRING, (actionFunc_t) setUseIPv6);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_SIZE_STRING, (actionFunc_t) setThreadpoolSize);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_BUSY_WAIT_TIMER_STRING, (actionFunc_t) setThreadpoolBusyWaitTimer);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_REQUEST_MAPPING_DOMAIN_SIZE_STRING, (actionFunc_t) setRequestMappingDomain);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_ROOT_DIR_STRING, (actionFunc_t) setWebserverRootDir);
-	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_INDEX_STRING, (actionFunc_t) setWebserverIndex);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_PORT_STRING, (actionFunc_t) setWebserverPort);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_FIND_NEXT_AVAILABLE_PORT_STRING, (actionFunc_t) setFindNextAvailablePort);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_CONNECTION_QUEUE_SIZE_STRING, (actionFunc_t) setWebserverConnectionQueueSize);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_USE_IPV6_STRING, (actionFunc_t) setUseIPv6);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_SIZE_STRING, (actionFunc_t) setThreadpoolSize);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_BUSY_WAIT_TIMER_STRING, (actionFunc_t) setThreadpoolBusyWaitTimer);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_REQUEST_MAPPING_DOMAIN_SIZE_STRING, (actionFunc_t) setRequestMappingDomain);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_ROOT_DIR_STRING, (actionFunc_t) setWebserverRootDir);
+	status |= hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_INDEX_STRING, (actionFunc_t) setWebserverIndex);
 
 	return status;
 }
@@ -158,7 +158,7 @@ config_t *readConfigurationFile(const char *propertiesFile) {
 		return NULL;
 	}
 
-	out->_private->propertyMap = createHashmap(TOTAL_PROPERTY_COUNT * 1.5, NULL);
+	out->_private->propertyMap = createHashmap(TOTAL_PROPERTY_COUNT * 1.5, NULL, NULL);
 	if (!out->_private->propertyMap) {
 		free(out->_private);
 		free(out);
@@ -175,7 +175,7 @@ config_t *readConfigurationFile(const char *propertiesFile) {
 
 	FILE *fp = fopen(propertiesFile, "r");
 	if (!fp) {
-		free(out);
+		deleteConfig(out);
 		return NULL;
 	}
 
@@ -199,4 +199,30 @@ void deleteConfig(config_t *conf) {
 	deleteHashmap(conf->_private->propertyMap);
 	free(conf->_private);
 	free(conf);
+}
+
+char *findConfigFile() {
+	FILE *fp = NULL;
+
+	char *buffer = malloc(BUFSIZ * sizeof(char));
+	if (!buffer) {
+		return NULL;
+	}
+
+	strncpy(buffer, "server.properties", 18);
+
+	for (int i = 0; i < MAX_CONFIG_SEARCH_DEPTH && !fp; i++) {
+		printf("Searching for %s...\n", buffer);
+		fp = fopen(buffer, "r");
+		if (fp) {
+			fclose(fp);
+			return buffer;
+		}
+
+		memcpy(buffer + 3, buffer, strlen(buffer) * sizeof(char));
+		buffer[0] = buffer[1] = '.';
+		buffer[2] = '/';
+	}
+
+	return NULL;
 }

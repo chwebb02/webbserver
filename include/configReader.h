@@ -12,4 +12,9 @@ config_t *readConfigurationFile(const char *propertiesFile);
 /// @param conf The config object
 void deleteConfig(config_t *conf);
 
+/// @brief Automatically search for a configuration file
+/// @return The configuration filepath, or NULL on error
+/// @note You will need to free this pointer if you call this function
+char *findConfigFile();
+
 #endif /* _CONFIG_READER_H_ */

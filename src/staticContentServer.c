@@ -15,20 +15,20 @@ staticContentServer_t *createStaticContentServer(config_t *conf) {
 		return NULL;
 	}
 
-	out->rootDir = malloc((strlen(conf->webserverRootDir) + 1) * sizeof(char));
+	out->rootDir = calloc((strlen(conf->webserverRootDir) + 1), sizeof(char));
 	if (!out->rootDir) {
 		free(out);
 		return NULL;
 	}
 
-	out->indexFileName = malloc((strlen(conf->webserverIndexFileName) + 2) * sizeof(char));
+	out->indexFileName = calloc((strlen(conf->webserverIndexFileName) + 2), sizeof(char));
 	if (!out->indexFileName) {
 		free(out->rootDir);
 		free(out);
 		return NULL;
 	}
 
-	strncpy(out->rootDir, conf->webserverRootDir, strlen(conf->webserverRootDir));
+	strcpy(out->rootDir, conf->webserverRootDir);
 	
 	out->indexFileName[0] = '/';
 	strcat(out->indexFileName, conf->webserverIndexFileName);
@@ -90,5 +90,7 @@ void deleteStaticContentServer(staticContentServer_t *scs) {
 		return;
 	}
 
+	free(scs->indexFileName);
+	free(scs->rootDir);
 	free(scs);
 }

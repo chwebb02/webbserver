@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include "requestHandler.h"
 #include <string.h>
+#include "terminal.h"
 
 struct webserverStruct {
 	socket_t *socket;
@@ -76,7 +77,7 @@ int processTransaction(webserver_t *ws) {
 
 	// Send response
 	if (sendHttpResponse(connection, response)) {
-		printf("Failed to send HTTP response to client.\n");
+		terminalSendMessage("Failed to send HTTP response to client.\n");
 	}
 
 	// Close connection
@@ -159,6 +160,7 @@ void deleteWebserver(webserver_t *ws) {
 	pthread_join(ws->connectionListener, NULL);
 	deleteThreadpool(ws->threadpool);
 	deleteQueue(ws->connectionQueue);
+	deleteRequestHandler(ws->reqHandler);
 	deleteSocket(ws->socket);
 	free(ws);
 }

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #define MAX_PORT_NUMBER 65535
 
@@ -95,9 +96,10 @@ clientConnection_t *socketAcceptConnection(socket_t *sock) {
 		return NULL;
 	}
 
+	socklen_t addrLen = 0;
 	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
 
-	socklen_t addrLen;
 	int fd = accept(sock->fd, (struct sockaddr *) &addr, &addrLen);
 	if (fd < 0) {
 		return NULL;

@@ -57,7 +57,7 @@ int terminalSendMessage(const char *msg) {
     if (!buffer) {
         return 2;
     }
-    strncpy(buffer, msg, strlen(msg));
+    strcpy(buffer, msg);
 
     if (queueAdd(msgQueue, buffer)) {
         free(buffer);
