@@ -65,9 +65,11 @@ int hashmapListInsert(hashmapList_t *list, void *item, const char *unhashedKey) 
 
 	if (!list->head) {
 		list->head = insertion;
+		list->tail = insertion;
+	} else {
+		list->tail->next = insertion;
 	}
 
-	list->tail->next = insertion;
 	list->tail = insertion;
 	list->length += 1;
 
@@ -98,7 +100,7 @@ void deleteHashmapList(hashmapList_t *hml) {
 
 	node_t *current = hml->head;
 	node_t *next;
-	for (int i = 0; i < hml->length; i++) {
+	for (size_t i = 0; i < hml->length; i++) {
 		next = current->next;
 
 		free(current->unhashedKey);
@@ -131,7 +133,7 @@ size_t defaultHashFunction(hashmap_t *map, const char *input) {
 	int inputLength = strlen(input);
 	size_t out = 0;
 	for (int i = 1; i < inputLength - 1; i++) {
-		out *= ((size_t) input[i - 1]) * 3 + ((size_t) input[i]) + ((size_t) input[i + 1]) * 2;
+		out += ((size_t) input[i - 1]) * 3 + ((size_t) input[i]) + ((size_t) input[i + 1]) * 2;
 		out %= map->arrayLength;
 	}
 
@@ -191,7 +193,7 @@ void deleteHashmap(hashmap_t *map) {
 		return;
 	}
 
-	for (int i = 0; i < map->arrayLength; i++) {
+	for (size_t i = 0; i < map->arrayLength; i++) {
 		deleteHashmapList(map->array[i]);
 	}
 

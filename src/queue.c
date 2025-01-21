@@ -115,7 +115,7 @@ void deleteQueue(queue_t *q) {
 		return;
 	}
 
-	for (int i = 0; i < q->length; i++) {
+	for (size_t i = 0; i < q->length; i++) {
 		if (q->freeMethod) {
 			q->freeMethod(queueGet(q));
 		}

@@ -1,0 +1,30 @@
+#ifndef _CONFIG_PROPERTIES_H_
+#define _CONFIG_PROPERTIES_H_
+
+// Total number of available properties
+#define TOTAL_PROPERTY_COUNT 9
+
+// Property strings
+#define PROPERTY_WEBSERVER_PORT_STRING "webserver-port"
+#define PROPERTY_FIND_NEXT_AVAILABLE_PORT_STRING "find-next-available-port"
+#define PROPERTY_WEBSERVER_CONNECTION_QUEUE_SIZE_STRING "webserver-connection-queue-size"
+#define PROPERTY_WEBSERVER_USE_IPV6_STRING "webserver-use-ipv6"
+#define PROPERTY_THREADPOOL_SIZE_STRING "threadpool-size"
+#define PROPERTY_THREADPOOL_BUSY_WAIT_TIMER_STRING "threadpool-busy-wait-timer"
+#define PROPERTY_REQUEST_MAPPING_DOMAIN_SIZE_STRING "request-mapping-domain"
+#define PROPERTY_WEBSERVER_ROOT_DIR_STRING "webserver-root-dir"
+#define PROPERTY_WEBSERVER_INDEX_STRING "webserver-index"
+
+// Property default values
+#define CONFIG_DEFAULT_WEBSERVER_PORT 8019
+#define CONFIG_DEFAULT_FIND_NEXT_AVAILABLE_PORT false
+#define CONFIG_DEFAULT_IPV6 false
+#define CONFIG_DEFAULT_CONNECTION_QUEUE_MAX_SIZE 25
+#define CONFIG_DEFAULT_THREADPOOL_SIZE 8
+#define CONFIG_DEFAULT_THREADPOOL_BUSY_WAIT_TIMER 1
+#define CONFIG_DEFAULT_REQUEST_MAPPING_DOMAIN_SIZE 100
+#define CONFIG_DEFAULT_WEBSERVER_ROOT_DIR "../resources/static"
+#define CONFIG_DEFAULT_WEBSERVER_INDEX "index.html"
+
+
+#endif /* _CONFIG_PROPERTIES_H_ */

@@ -81,6 +81,7 @@ int processTransaction(webserver_t *ws) {
 
 	// Close connection
 	deleteClientConnection(connection);
+	return 0;
 }
 
 void connectionListenerFunction(webserver_t *ws) {
@@ -154,15 +155,10 @@ void deleteWebserver(webserver_t *ws) {
 		return;
 	}
 
-	unsigned short port = socketGetBoundPort(ws->socket);
-	printf("Shutting down webserver on port %d...\n", port);
-
 	pthread_cancel(ws->connectionListener);
 	pthread_join(ws->connectionListener, NULL);
 	deleteThreadpool(ws->threadpool);
 	deleteQueue(ws->connectionQueue);
 	deleteSocket(ws->socket);
 	free(ws);
-
-	printf("Shut down webserver on port %d.\n", port);
 }

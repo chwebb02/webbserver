@@ -3,20 +3,25 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include "hashmap.h"
+#include "configProperties.h"
 
-// POTENTIAL TODO: Replace configuration property hash with library hashmap
+struct _configInternalStruct {
+	hashmap_t *propertyMap;
+};
 
-#define HASH_MODULO 100000000
-
-enum readLineErrors {
+typedef enum actionFuncReturnValueEnum {
 	SUCCESS = 0,
 	ZERO_HASH,
 	INVALID_PROPERTY,
-	INVALID_VALUE
-};
+	INVALID_VALUE,
+	CRITICAL
+} actionReturn_t;
+
+typedef actionReturn_t (*actionFunc_t)(config_t *, const char *);
 
 int breakUp(const char *line, char *property, char *value, char delim) {
-	for (int i = 0; i < strlen(line); i++) {
+	for (size_t i = 0; i < strlen(line); i++) {
 		if (line[i] == delim) {
 			memcpy(property, line, i * sizeof(char));
 			memcpy(value, line + i + 1, (strlen(line) - (i + 1)) * sizeof(char));
@@ -32,28 +37,58 @@ int breakUp(const char *line, char *property, char *value, char delim) {
 	return 1;
 }
 
-ssize_t hashProperty(const char *prop) {
-	ssize_t out = 0;
-	for (int i = 0; i < strlen(prop); i++) {
-		out *= 10;
-		out += (ssize_t) prop[i];
-		out %= HASH_MODULO;
-	}
-	
-	return out;
+actionReturn_t setWebserverPort(config_t *conf, const char *value) {
+	conf->webserverPort = atoi(value);
+	return SUCCESS;
 }
 
-ssize_t WEBSERVER_PORT_HASH;
-ssize_t FIND_NEXT_AVAILABLE_PORT_HASH;
-ssize_t WEBSERVER_USE_IPV6_HASH;
-ssize_t WEBSERVER_CONNECTION_QUEUE_SIZE_HASH;
-ssize_t THREADPOOL_SIZE_HASH;
-ssize_t THREADPOOL_BUSY_WAIT_TIMER_HASH;
-ssize_t REQUEST_MAPPING_DOMAIN_HASH;
-ssize_t WEBSERVER_ROOT_DIR_HASH;
-ssize_t WEBSERVER_INDEX_HASH;
+actionReturn_t setFindNextAvailablePort(config_t *conf, const char *value) {
+	conf->findNextAvailablePort = !strcmp(value, "false") ? false : true;
 
-int readLine(config_t *conf, FILE *fp) {
+	if (strcmp(value, "false") && strcmp(value, "true")) {
+		printf("Invalid value '%s' for property '%s', defaulting to false\n", value, PROPERTY_FIND_NEXT_AVAILABLE_PORT_STRING);
+		return INVALID_VALUE;
+	}
+
+	return SUCCESS;
+}
+
+actionReturn_t setUseIPv6(config_t *conf, const char *value) {
+	printf("IPv6 not supported yet, but will be eventually\n");
+	return SUCCESS;
+}
+
+actionReturn_t setWebserverConnectionQueueSize(config_t *conf, const char *value) {
+	conf->connectionQueueMaxSize = atoi(value);
+	return SUCCESS;
+}
+
+actionReturn_t setThreadpoolSize(config_t *conf, const char *value) {
+	conf->threadpoolSize = atoi(value);
+	return SUCCESS;
+}
+
+actionReturn_t setThreadpoolBusyWaitTimer(config_t *conf, const char *value) {
+	conf->threadpoolBusyWaitTimer = atoi(value);
+	return SUCCESS;
+}
+
+actionReturn_t setRequestMappingDomain(config_t *conf, const char *value) {
+	conf->requestMappingDomainSize = atoi(value);
+	return SUCCESS;
+}
+
+actionReturn_t setWebserverRootDir(config_t *conf, const char *value) {
+	strncpy(conf->webserverRootDir, value, MAX_WEBSERVER_ROOT_DIR_PATH_LEN);
+	return SUCCESS;
+}
+
+actionReturn_t setWebserverIndex(config_t *conf, const char *value) {
+	strncpy(conf->webserverIndexFileName, value, MAX_WEBSERVER_INDEX_FILE_NAME_LEN);
+	return SUCCESS;
+}
+
+actionReturn_t readLine(config_t *conf, FILE *fp) {
 	// Grab a buffer to read configuration lines into
 	char buffer[BUFSIZ];
 	fgets(buffer, BUFSIZ * sizeof(char), fp);
@@ -65,41 +100,17 @@ int readLine(config_t *conf, FILE *fp) {
 	memset(value, '\0', BUFSIZ * sizeof(char));
 	breakUp(buffer, property, value, '=');
 
-	ssize_t hash = hashProperty(property);
-
-	// TODO: Implement proper logic for value checking with atoi and other such functions
-
-	if (hash == 0) {
+	if (strlen(property) < 1) {
 		return ZERO_HASH;
-	} else if (hash == WEBSERVER_PORT_HASH) {
-		conf->webserverPort = atoi(value);
-	} else if (hash == FIND_NEXT_AVAILABLE_PORT_HASH) {
-		conf->findNextAvailablePort = !strcmp(value, "false") ? false : true;
+	}
 
-		if (strcmp(value, "false") && strcmp(value, "true")) {
-			printf("Invalid value '%s' for property '%s', defaulting to false\n", value, property);
-			return INVALID_VALUE;
-		}
-	} else if (hash == WEBSERVER_USE_IPV6_HASH) {
-		printf("IPv6 not supported yet, but will be eventually\n");
-	} else if (hash == WEBSERVER_CONNECTION_QUEUE_SIZE_HASH) {
-		conf->connectionQueueMaxSize = atoi(value);
-	} else if (hash == THREADPOOL_SIZE_HASH) {
-		conf->threadpoolSize = atoi(value);
-	} else if (hash == THREADPOOL_BUSY_WAIT_TIMER_HASH) {
-		conf->threadpoolBusyWaitTimer = atoi(value);
-	} else if (hash == REQUEST_MAPPING_DOMAIN_HASH) {
-		conf->requestMappingDomainSize = atoi(value);	
-	} else if (hash == WEBSERVER_ROOT_DIR_HASH) {
-		strncpy(conf->webserverRootDir, value, MAX_WEBSERVER_ROOT_DIR_PATH_LEN);
-	} else if (hash == WEBSERVER_INDEX_HASH) {
-		strncpy(conf->webserverIndexFileName, value, MAX_WEBSERVER_INDEX_FILE_NAME_LEN);
-	} else {
-		printf("Unknown configuration property: '%s'\n", property);
+	actionFunc_t action = hashmapLookup(conf->_private->propertyMap, property);
+	if (action == NULL) {
+		printf("Unknown configuration property: %s\n", property);
 		return INVALID_PROPERTY;
 	}
 
-	return SUCCESS;
+	return action(conf, value);
 }
 
 void setDefaults(config_t *conf) {
@@ -115,34 +126,19 @@ void setDefaults(config_t *conf) {
 	strncpy(conf->webserverIndexFileName, CONFIG_DEFAULT_WEBSERVER_INDEX, (strlen(CONFIG_DEFAULT_WEBSERVER_INDEX) + 1) * sizeof(char));
 }
 
-// Precompute hashes for optimization
-ssize_t hashValues[TOTAL_PROPERTY_COUNT];
-void precomputeHashes() {
-	hashValues[0] = WEBSERVER_PORT_HASH = hashProperty("webserver-port");
-	hashValues[1] = FIND_NEXT_AVAILABLE_PORT_HASH = hashProperty("find-next-available-port");
-	hashValues[2] = WEBSERVER_USE_IPV6_HASH = hashProperty("webserver-use-ipv6");
-	hashValues[3] = WEBSERVER_CONNECTION_QUEUE_SIZE_HASH = hashProperty("webserver-connection-queue-size");
-	hashValues[4] = THREADPOOL_SIZE_HASH = hashProperty("threadpool-size");
-	hashValues[5] = THREADPOOL_BUSY_WAIT_TIMER_HASH = hashProperty("threadpool-busy-wait-timer");
-	hashValues[6] = REQUEST_MAPPING_DOMAIN_HASH = hashProperty("request-mapping-domain");
-	hashValues[7] = WEBSERVER_ROOT_DIR_HASH = hashProperty("webserver-root-dir");
-	hashValues[8] = WEBSERVER_INDEX_HASH = hashProperty("webserver-index");
-}
+int populatePropertyMap(config_t *conf) {
+	int status = 0;
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_PORT_STRING, (actionFunc_t) setWebserverPort);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_FIND_NEXT_AVAILABLE_PORT_STRING, (actionFunc_t) setFindNextAvailablePort);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_CONNECTION_QUEUE_SIZE_STRING, (actionFunc_t) setWebserverConnectionQueueSize);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_USE_IPV6_STRING, (actionFunc_t) setUseIPv6);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_SIZE_STRING, (actionFunc_t) setThreadpoolSize);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_THREADPOOL_BUSY_WAIT_TIMER_STRING, (actionFunc_t) setThreadpoolBusyWaitTimer);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_REQUEST_MAPPING_DOMAIN_SIZE_STRING, (actionFunc_t) setRequestMappingDomain);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_ROOT_DIR_STRING, (actionFunc_t) setWebserverRootDir);
+	status += hashmapInsert(conf->_private->propertyMap, PROPERTY_WEBSERVER_INDEX_STRING, (actionFunc_t) setWebserverIndex);
 
-bool verifyHashIntegrity() {
-	for (int i = 0; i < TOTAL_PROPERTY_COUNT; i++) {
-		for (int j = 0; j < TOTAL_PROPERTY_COUNT; j++) {
-			if (j == i) {
-				continue;
-			}
-
-			if (hashValues[i] == hashValues[j]) {
-				return false;
-			}
-		}
-	}
-
-	return true;
+	return status;
 }
 
 config_t *readConfigurationFile(const char *propertiesFile) {
@@ -156,12 +152,25 @@ config_t *readConfigurationFile(const char *propertiesFile) {
 		return NULL;
 	}
 
+	out->_private = malloc(sizeof(_configInternal_t));
+	if (!out->_private) {
+		free(out);
+		return NULL;
+	}
+
+	out->_private->propertyMap = createHashmap(TOTAL_PROPERTY_COUNT * 1.5, NULL);
+	if (!out->_private->propertyMap) {
+		free(out->_private);
+		free(out);
+		return NULL;
+	}
+
 	// Setup
 	setDefaults(out);
-	precomputeHashes();
-	if (!verifyHashIntegrity()) {
-		printf("Configuration hash integrity check failed!\n");
-		exit(1);
+	if (populatePropertyMap(out)) {
+		printf("Failed to map properties\n");
+		deleteConfig(out);
+		return NULL;
 	}
 
 	FILE *fp = fopen(propertiesFile, "r");
@@ -175,6 +184,11 @@ config_t *readConfigurationFile(const char *propertiesFile) {
 		int status = readLine(out, fp);
 
 		// May need to handle situations where status is a critical error here
+		if (status == CRITICAL) {
+			fclose(fp);
+			deleteConfig(out);
+			return NULL;
+		}
 	}
 
 	fclose(fp);
@@ -182,5 +196,7 @@ config_t *readConfigurationFile(const char *propertiesFile) {
 }
 
 void deleteConfig(config_t *conf) {
+	deleteHashmap(conf->_private->propertyMap);
+	free(conf->_private);
 	free(conf);
 }

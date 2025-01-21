@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_C_FLAGS "-O3")
+add_compile_options(-O3 -Wall)
 
 project(cWebServer)
 

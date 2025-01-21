@@ -40,12 +40,14 @@ int main(int argc, char **argv) {
 	printf("Webserver registered.\n");
 
 	// Initialize the terminal for concurrent messages
+	printf("\nInitializing terminal...\n");
 	if (initTerminal(conf)) {
 		printf("Could not change terminal modes.\n");
 		deleteWebserver(webserver);
 		deleteConfig(conf);
 		exit(1);
 	}
+	printf("Terminal initialized.\n");
 
 	deleteConfig(conf);
 	// End configuration step
@@ -57,19 +59,28 @@ int main(int argc, char **argv) {
 		deleteWebserver(webserver);
 		exit(1);
 	}
-	printf("Webserver started on port %d\n", getWebserverPort(webserver));
+	unsigned short boundPort = getWebserverPort(webserver);
+	printf("Webserver started on port %d.\n", boundPort);
 
 	terminalSendMessage("Webserver time!");
 	char buffer[BUFSIZ];
 	while (1) {
 		fgets(buffer, BUFSIZ * sizeof(char), stdin);
-		terminalSendMessage("Unknown command!");
-		sleep(2);
+		buffer[strlen(buffer) - 1] = '\0';
+
+		if (!strncmp(buffer, "stop", 4)) {
+			break;
+		} else {
+			terminalSendMessage("Unknown command!");
+		}
 	}
 	
+	printf("Shutting down webserver on port %d...\n", boundPort);
 	deleteTerminal();
 	deleteWebserver(webserver);
+	printf("Shut down webserver on port %d.\n", boundPort);
 	// Shutdown the webserver
 
+	printf("\n");
 	return 0;
 }

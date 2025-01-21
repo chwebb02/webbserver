@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "configreader.h": "c"
+        "configreader.h": "c",
+        "string.h": "c"
     }
 }

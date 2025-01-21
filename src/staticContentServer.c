@@ -10,10 +10,6 @@ struct staticContentServerStruct {
 };
 
 staticContentServer_t *createStaticContentServer(config_t *conf) {
-	if (!conf->webserverRootDir) {
-		return NULL;
-	}
-
 	staticContentServer_t *out = malloc(sizeof(staticContentServer_t));
 	if (!out) {
 		return NULL;

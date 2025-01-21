@@ -12,7 +12,7 @@ struct requestHandlerStruct {
 #include <stdio.h>
 
 requestHandler_t *createRequestHandler(config_t *conf) {
-	if (conf->requestMappingDomainSize < 1 || !conf->webserverRootDir) {
+	if (conf->requestMappingDomainSize < 1) {
 		return NULL;
 	}
 

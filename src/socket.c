@@ -11,7 +11,7 @@
 
 struct socketStruct {
 	int fd;
-	unsigned short boundPort;
+	uint32_t boundPort;
 	unsigned short maxConnectionQueue;
 };
 
@@ -37,7 +37,7 @@ socket_t *createSocket(config_t *conf) {
 	addr.sin_family = conf->ipv6 ? AF_INET6 : AF_INET;
 	addr.sin_port = htons(conf->webserverPort);
 
-	unsigned short port = conf->webserverPort;
+	uint32_t port = conf->webserverPort;
 	if (-1 == bind(out->fd, (struct sockaddr *) &addr, sizeof(addr))) {
 		if (errno == 98) {
 			if (!conf->findNextAvailablePort) {
